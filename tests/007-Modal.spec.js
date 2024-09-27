@@ -29,12 +29,12 @@ test.beforeEach(async({page}) => {
 
 test('Simple Modal', async ({ page }) => {
     // Click on the 'Modals' link to navigate to the Modals page
-    await page.getByRole('link', { name: 'Modals' }).click(); // Acesse a página de Modals
+    await page.getByRole('link', { name: 'Modals' }).click(); 
     // Click the 'Simple Modal' button to open the modal
-    await page.getByRole('button', { name: 'Simple Modal' }).click(); // Certifique-se de que o seletor corresponde ao botão correto
+    await page.getByRole('button', { name: 'Simple Modal' }).click();
     // Verify the modal title and body content
-    const modalTitle = await page.locator('#pum_popup_title_1318').textContent(); // Extraindo o texto do título
-    const modalBody = await page.getByText('Hi, I’m a simple modal.').textContent(); // Extraindo o texto do corpo do modal
+    const modalTitle = await page.locator('#pum_popup_title_1318').textContent(); 
+    const modalBody = await page.getByText('Hi, I’m a simple modal.').textContent();
     // Validate the modal's content
     if (modalTitle.trim() === 'Simple Modal' && modalBody.trim() === "Hi, I'm a simple modal.") {
       console.log('The modal content is correct.');

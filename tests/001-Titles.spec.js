@@ -28,4 +28,5 @@ test.beforeEach(async({page}) => {
 test('Has Title', async ({ page }) => {
   // Check if the page title matches the expected title
   await expect(page).toHaveTitle("Learn and Practice Automation | automateNow");
+  
 });
