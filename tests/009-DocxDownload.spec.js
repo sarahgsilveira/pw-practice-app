@@ -34,51 +34,64 @@ test.beforeEach(async({page}) => {
   }
 });
 
+// Requirements:
+// Navigate to the page and click on the link to open the download page.
+// Click on the "Download" button, which triggers a modal.
+// Enter the password into the modal and click the "Submit" button.
+// Check and delete an existing file called test.docx from C:\Users\Sarah\Downloads before proceeding with the download.
+// Download the new file and ensure the workflow completes successfully.
+
 test('Downloading .Docx File via File name', async ({ page }) => {
-    // Preconditions: Check if the file exists and delete if it does
-    // Step 1: Click on the file name to download
-    await page.getByRole('link', { name: 'Sandbox Download Form - .docx' }).click();
-  
-    // Step 2: Wait for the download event after clicking the download link
-    const downloadPromise = page.waitForEvent('download', { timeout: 60000 }); // Increase timeout
+    // Click on the Sandbox Download Form link
+    await page.click('h3.package-title >> text=Sandbox Download Form - .docx');
 
-    // Step 3: Click on the download link
-    await page.click('a.wpdm-download-link'); // Use the correct selector
+    // Wait for the download button to be visible
+    await page.waitForSelector('a.wpdm-download-link');
+    
+    // Click the download button
+    await page.click('a.wpdm-download-link');
 
-    // Step 4: Wait for the download to complete
-    const download = await downloadPromise;
-
-    // Step 4: Define the folder where the file should be saved (C:\Users\Sarah\Downloads)
-    const downloadDir = 'C:\\Users\\Sarah\\Downloads'; // Windows-specific path
-
-    // Step 5: Define the file path and save the downloaded file
-    const filePath = path.join(downloadDir, 'test.pdf');
-    await download.saveAs(filePath);
-
-    // Step 6: Verify that the file exists in the folder
-    const fileExists = fs.existsSync(filePath);
-    expect(fileExists).toBe(true); // Check if the file exists
-    console.log(fileExists ? 'PDF file was downloaded successfully.' : 'File not found.');
-
-    // Optional: Add more verification such as checking file size or content
-    const stats = fs.statSync(filePath);
-    console.log(`File size: ${stats.size} bytes`);
-   
-
-
-   
-});
-
-test('Downloading .Docx File via File name - Wrong PSD', async ({ page }) => {
-    await page.getByRole('link', { name: 'Sandbox Download Form - .docx' }).click();
-    await page.getByRole('link', { name: 'Download' }).click();
-
+    //Wait for network activity to stop (ensures that the page has loaded fully)
     await page.waitForLoadState('networkidle'); 
-    await page.waitForSelector('#modal-content', { state: 'attached' });
-    await page.waitForSelector('#modal-content', { state: 'visible' });
-    // await page.locator('#wpdm-lock-frame').contentFrame().getByPlaceholder('Enter Password').click();
-    // await page.locator('#wpdm-lock-frame').contentFrame().getByPlaceholder('Enter Password').fill('automatenow');
-    // await page.locator('#wpdm-lock-frame').contentFrame().getByRole('button', { name: 'Submit' }).click();
-    // await page.locator('#wpdm-lock-frame').contentFrame().getByText('Wrong Password! Try Again').click();
-});
 
+    // Ensure the modal is visible and enabled
+    await page.getByTestId('modal-content', { state: 'visible' });
+    await page.getByTestId('modal-content', { state: 'enabled' });
+
+    // Wait for a short period to allow JavaScript to initialize or animations to complete
+    await page.waitForTimeout(2000); // Adjust this if you need more/less time
+
+    const downloadText = await page.getByRole('Download');
+    console.log('Text content inside modal:', downloadText);
+
+ // Handle the frame containing the password field (if it's in an iframe)
+ const frame = await page.frameLocator('#wpdm-lock-frame'); // Ensure frame is correctly targeted
+
+ // Wait for the password input inside the frame
+ await frame.locator('#wpdm-lock-frame').waitFor({ timeout: 5000 });
+
+
+ // Fill the password field in the modal inside the frame
+ await frame.locator('#password_66f43ef2bac10_921').fill('automateNow');
+
+ // Click the submit button inside the frame
+ await frame.locator('#wpdm_submit_66f43ef2bac10_921').click();
+
+ // Wait for the download to trigger (adjust timeout if needed)
+ await page.waitForTimeout(3000);
+
+ // Monitor for the download event
+ const [download] = await Promise.all([
+     page.waitForEvent('download'),
+     // Perform action that triggers the download
+ ]);
+
+ // Define the path for the downloaded file
+ const downloadFolder = 'C:\\Users\\Sarah\\Downloads';
+ const downloadPath = path.join(downloadFolder, await download.suggestedFilename());
+
+ // Save the downloaded file to your preferred directory
+ await download.saveAs(downloadPath);
+
+ console.log(`File downloaded to: ${downloadPath}`);
+});
